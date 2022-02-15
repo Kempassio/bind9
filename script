@@ -1,0 +1,133 @@
+#!/bin/bash
+#ESTRUCTURA
+#
+#<Prefijo>  <>   <Tipo>   <Rdata>
+#   www     IN     NS    dominio.com
+#
+
+b_directa=("prefijo" \ "tipo" \ "rdata")
+b_inversa=("digito" \ "tipo" \ "rdata")
+
+apt install bind9 -y > /dev/null 2>&1
+
+tip()
+{
+    echo "; Añadir servidor, comillas, cambiar localhost por dominio y añadir . al final de los dominios" >> db.$dominio;
+}
+
+menu()
+{
+#menu
+echo "1. Busqueda directa"
+echo "2. Busqueda inversa" 
+echo "3. Master Slave"
+echo "4. Master Slave Inverso"
+echo "5. Crear zonas"
+echo "6. Crear zonas Inversas"
+echo "7. Cambiar Resolv"
+echo "8. Salir"
+
+read -p "Intruduzca una opcion: " opc
+case $opc  in
+1)
+    clear
+    #BUSQUEDA DIRECTA
+    read -p "Dominio: " dominio
+    if [ ! -f /etc/bind/db.${dominio/ /} ]; then cp db.local db.$dominio; fi
+    cat /etc/bind/db.${dominio/ /}
+    #PREGUNTA DATOS
+    for i in ${b_directa[@]/ /}; do
+    read -p "$i: " $i
+    done
+    echo -e "$prefijo\tIN\t$tipo\t$rdata" >> db.$dominio
+    tip
+    nano /etc/bind/db.$dominio
+    clear
+    ;;
+2)
+    clear
+    #BUSQUEDA INVERSA
+    read -p "Ip inversa(1.168.192): " ip
+    if [ ! -f /etc/bind/db.$ip ]; then cp db.local db.$ip; fi
+    cat /etc/bind/db.${ip/ /}
+    for i in ${b_inversa[@]/ /}; do
+    read -p "$i: " $i
+    done
+    echo -e "$digito\tIN\t$tipo\t$rdata" >> db.$ip
+    tip
+    nano /etc/bind/db.$ip
+    clear
+    ;;
+3)
+    clear
+    #MASTER SLAVE
+    ruta=/etc/bind/named.conf.local
+    read -p "Dominio: " dominio
+    read -p "Ip del Slave: " ip
+    echo "zone "$dominio" IN {" >> $ruta
+    echo "	type slave;" >> $ruta
+    echo "	masters { $ip; };" >> $ruta
+    echo "  file /etc/bind/db.$dominio"
+    echo "};" >> $ruta
+    tip
+    nano $ruta
+    clear
+;;
+4)
+    clear
+    #MASTER SLAVE INVERSO
+    ruta=/etc/bind/named.conf.local 
+    read -p "Ip inversa(1.168.192): " ip
+    echo "zone $ip.in-addr.arpa IN {" >> $ruta
+    echo "	type slave;" >> $ruta
+    echo "	masters { $ip; };" >> $ruta
+    echo "  file /etc/bind/db.$ip"
+    echo "};" >> $ruta
+    tip
+    nano $ruta
+    clear
+;;
+5)
+    clear
+    #CONFIGURA LAS ZONAS 
+    ruta=/etc/bind/named.conf.local
+    read -p "Dominio(ejemplo.local): " dominio
+    echo "zone "$dominio" IN {" >> $ruta
+    echo "	type master;" >> $ruta
+    echo "	file /etc/bind/db.$dominio;" >> $ruta
+    echo "};" >> $ruta
+    tip
+    nano $ruta
+    clear
+;;
+6)
+    #CONFIGURA LAS ZONAS INVERSAS
+    ruta=/etc/bind/named.conf.local
+    read -p "Ip (1.168.192): " ip
+    echo "zone "$ip.in-addr.arpa" IN {" >> $ruta
+    echo "  type master;" >> $ruta
+    echo "  file /etc/bind/db.$ip;" >> $ruta
+    echo "};" >> $ruta
+    tip
+    nano $ruta
+;;
+7)
+    clear
+    read -p "Introduce ip de busqueda: " ip
+    read -p "Introduce dominio de busqueda: " dominio
+    echo "nameserver $ip" > /etc/resolv.conf
+    echo "search $dominio" >> /etc/resolv.conf
+    clear
+;;
+8)
+clear
+exit 0
+;;
+
+esac
+}
+clear
+while :
+do
+menu
+done
