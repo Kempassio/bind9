@@ -10,10 +10,15 @@ b_inversa=("digito" \ "tipo" \ "rdata")
 
 apt install bind9 -y > /dev/null 2>&1
 
-tip()
+tipdb()
 {
     echo "; Añadir servidor, comillas, cambiar localhost por dominio y añadir . al final de los dominios" >> db.$dominio;
 }
+tipna()
+{
+    echo "// Añadir servidor, comillas, cambiar localhost por dominio y añadir . al final de los dominios" >> /etc/bind/named.conf.local;
+}
+
 
 menu()
 {
@@ -33,14 +38,14 @@ case $opc  in
     clear
     #BUSQUEDA DIRECTA
     read -p "Dominio: " dominio
-    if [ ! -f /etc/bind/db.${dominio/ /} ]; then cp db.local db.$dominio; fi
+    if [ ! -f /etc/bind/db.${dominio/ /} ]; then cp /etc/bind/db.local /etc/bind/db.$dominio; fi
     cat /etc/bind/db.${dominio/ /}
     #PREGUNTA DATOS
     for i in ${b_directa[@]/ /}; do
     read -p "$i: " $i
     done
-    echo -e "$prefijo\tIN\t$tipo\t$rdata" >> db.$dominio
-    tip
+    echo -e "$prefijo\tIN\t$tipo\t$rdata" >> /etc/bind/db.$dominio
+    tipdb
     nano /etc/bind/db.$dominio
     clear
     ;;
@@ -48,13 +53,13 @@ case $opc  in
     clear
     #BUSQUEDA INVERSA
     read -p "Ip inversa(1.168.192): " ip
-    if [ ! -f /etc/bind/db.$ip ]; then cp db.local db.$ip; fi
+    if [ ! -f /etc/bind/db.$ip ]; then cp /etc/bind/db.local /etc/bind/db.$ip; fi
     cat /etc/bind/db.${ip/ /}
     for i in ${b_inversa[@]/ /}; do
     read -p "$i: " $i
     done
-    echo -e "$digito\tIN\t$tipo\t$rdata" >> db.$ip
-    tip
+    echo -e "$digito\tIN\t$tipo\t$rdata" >> /etc/bind/db.$ip
+    tipdb
     nano /etc/bind/db.$ip
     clear
     ;;
@@ -69,7 +74,7 @@ case $opc  in
     echo "	masters { $ip; };" >> $ruta
     echo "  file /etc/bind/db.$dominio"
     echo "};" >> $ruta
-    tip
+    tipna
     nano $ruta
     clear
 ;;
@@ -83,7 +88,7 @@ case $opc  in
     echo "	masters { $ip; };" >> $ruta
     echo "  file /etc/bind/db.$ip"
     echo "};" >> $ruta
-    tip
+    tipna
     nano $ruta
     clear
 ;;
@@ -96,7 +101,7 @@ case $opc  in
     echo "	type master;" >> $ruta
     echo "	file /etc/bind/db.$dominio;" >> $ruta
     echo "};" >> $ruta
-    tip
+    tipna
     nano $ruta
     clear
 ;;
@@ -108,7 +113,7 @@ case $opc  in
     echo "  type master;" >> $ruta
     echo "  file /etc/bind/db.$ip;" >> $ruta
     echo "};" >> $ruta
-    tip
+    tipna
     nano $ruta
 ;;
 7)
